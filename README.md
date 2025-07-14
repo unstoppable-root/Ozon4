@@ -30,6 +30,9 @@ ___
 - https://github.com/KlimAlexandrovich/OzonSellerApi.git
 - cd ozon_seller_api
 - pip install -r requirements.txt
+  # Для запуска примеров в Jupyter можно установить дополнительные зависимости
+  # из файла requirements-dev.txt:
+  # pip install -r requirements-dev.txt
 
 ___
 
