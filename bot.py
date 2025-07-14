@@ -1,10 +1,16 @@
 import os
 import logging
+from dotenv import load_dotenv
+import os
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 from fetchers.Finance import AsyncFinanceRealizationList
 
+load_dotenv()
+
+CLIENT_ID = os.getenv("OZON_CLIENT_ID")
+API_KEY = os.getenv("OZON_API_KEY")
 
 def calculate_pnl(operations):
     """Simple PnL calculation from list of operations."""
