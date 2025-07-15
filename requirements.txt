@@ -84,3 +84,4 @@ webencodings==0.5.1
 websocket-client==1.8.0
 yarl==1.9.4
 python-telegram-bot==20.7
+python-dotenv
