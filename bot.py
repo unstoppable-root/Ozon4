@@ -20,9 +20,34 @@ def calculate_pnl(operations):
     return total
 
 
+def calculate_sales_stats(operations):
+    """Return sales and returns statistics from operations."""
+    stats = {
+        "sales_count": 0,
+        "sales_amount": 0.0,
+        "returns_count": 0,
+        "returns_amount": 0.0,
+    }
+    for op in operations:
+        op_type = str(op.get("operation_type", "")).lower()
+        amount = op.get("amount") or op.get("operation_sum") or 0
+        try:
+            amount = float(amount)
+        except (TypeError, ValueError):
+            continue
+        if "return" in op_type:
+            stats["returns_count"] += 1
+            stats["returns_amount"] += amount
+        elif "sale" in op_type:
+            stats["sales_count"] += 1
+            stats["sales_amount"] += amount
+    return stats
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "Отправьте /pnl YYYY.MM.DD YYYY.MM.DD для получения отчета"
+        "Отправьте /pnl YYYY.MM.DD YYYY.MM.DD для получения отчета\n"
+        "Отправьте /sales YYYY.MM.DD YYYY.MM.DD для статистики продаж"
     )
 
 
@@ -50,6 +75,32 @@ async def pnl(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+async def sales(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if len(context.args) < 2:
+        await update.message.reply_text(
+            "Использование: /sales YYYY.MM.DD YYYY.MM.DD"
+        )
+        return
+    start, end = context.args[0], context.args[1]
+    headers = {
+        "Client-Id": os.getenv("OZON_CLIENT_ID", ""),
+        "Api-Key": os.getenv("OZON_API_KEY", ""),
+    }
+    fetcher = AsyncFinanceRealizationList(headers, start, end)
+    try:
+        await fetcher.run_in_jupyter()
+    except Exception as exc:
+        logging.exception("Ozon API request failed", exc_info=exc)
+        await update.message.reply_text("Не удалось получить данные Ozon.")
+        return
+    stats = calculate_sales_stats(fetcher.data)
+    await update.message.reply_text(
+        f"Продажи за период {start} - {end}:\n"
+        f"Продажи: {stats['sales_count']} на сумму {stats['sales_amount']:.2f}\n"
+        f"Возвраты: {stats['returns_count']} на сумму {stats['returns_amount']:.2f}"
+    )
+
+
 def main() -> None:
     token = os.getenv("TELEGRAM_TOKEN")
     if not token:
@@ -57,6 +108,7 @@ def main() -> None:
     app = ApplicationBuilder().token(token).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("pnl", pnl))
+    app.add_handler(CommandHandler("sales", sales))
     app.run_polling()
 
 
