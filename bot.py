@@ -60,5 +60,10 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(
+        level=logging.INFO,
+        filename="api_requests_error.log",
+        filemode="w",
+        format="%(asctime)s %(levelname)s %(message)s",
+    )
     main()
