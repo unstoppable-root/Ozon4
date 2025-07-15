@@ -17,15 +17,6 @@ async def manage_asyncio_wait(pending: List[asyncio.Task]) -> None:
 
     :param pending: Список задач.
     """
-    logging_options = [logging.basicConfig(level=logging.INFO,
-                                           filename="api_requests_error.log",
-                                           filemode="w",
-                                           format="%(asctime)s %(levelname)s %(message)s"),
-                       logging.debug("A DEBUG Message"),
-                       logging.info("An INFO"),
-                       logging.warning("A WARNING"),
-                       logging.error("An ERROR"),
-                       logging.critical("A message of CRITICAL severity")]
     while pending:
         done, pending = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
 
