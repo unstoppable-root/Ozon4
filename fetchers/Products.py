@@ -1,5 +1,5 @@
 import requests
-import json
+import orjson
 from typing import Dict, AnyStr, List, Tuple
 from copy import deepcopy
 from ..tools.functions import flatten_dict
@@ -70,7 +70,7 @@ class Products:
         :param api_method: API-метод, который будет использован для создания post-запроса.
         """
         try:
-            req = requests.post(api_method, headers=self.headers, data=json.dumps(self.body))
+            req = requests.post(api_method, headers=self.headers, data=orjson.dumps(self.body))
         except ConnectionError:
             raise ConnectionError()
 
@@ -78,8 +78,8 @@ class Products:
             raise Exception(f"Ошибка получения товаров. "
                             f"OZON request: {req.status_code}\n"
                             f"URL: {api_method}\n"
-                            f"Message: {req.json()['message']}")
-        req = req.json()["result"]
+                            f"Message: {orjson.loads(req.content)['message']}")
+        req = orjson.loads(req.content)["result"]
         return req["items"], req["total"], req["last_id"]
 
     def _get_products_prices_stocks(self, api: AnyStr, self_attr: List) -> None:
@@ -127,7 +127,7 @@ class Products:
         thousands = (len(products_id) / 1000).__ceil__()
         for n_thousand in range(thousands):
             body = {"product_id": products_id[(1000 * n_thousand):(1000 * (n_thousand + 1))]}
-            body = json.dumps(body)
+            body = orjson.dumps(body)
 
             try:
                 req = requests.post(self.urls["product_info_list"], headers=self.headers, data=body)
@@ -135,12 +135,12 @@ class Products:
                 raise ConnectionError()
 
             if req.status_code == 200:
-                self.product_info += req.json()["result"]["items"]
+                self.product_info += orjson.loads(req.content)["result"]["items"]
             else:
                 raise Exception(f"Ошибка получения товаров. "
                                 f"OZON request: {req.status_code}\n"
                                 f"URL: {self.urls['product_info_list']}\n"
-                                f"Message: {req.json()['message']}")
+                                f"Message: {orjson.loads(req.content)['message']}")
 
     def prepare_stocks(self) -> None:
         """

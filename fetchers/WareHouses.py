@@ -1,5 +1,6 @@
 from typing import List, Dict, AnyStr
 import requests
+import orjson
 
 
 def get_ozon_warehouses(headers: Dict, output_format: AnyStr = "full") -> List[Dict] or Dict or List:
@@ -24,7 +25,7 @@ def get_ozon_warehouses(headers: Dict, output_format: AnyStr = "full") -> List[D
     if wh.status_code != 200:
         raise ConnectionError
 
-    wh = wh.json()["result"]
+    wh = orjson.loads(wh.content)["result"]
     if output_format == "full":
         return wh
     elif output_format == "id_name":
