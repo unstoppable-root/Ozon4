@@ -1,5 +1,5 @@
 import requests
-import json
+import orjson
 from typing import Dict
 
 
@@ -34,12 +34,12 @@ class SellerRating:
         :return: Словарь с информацией о рейтинге магазина.
         """
         try:
-            req = requests.post(self.url, headers=self.headers, data=json.dumps({}))
+            req = requests.post(self.url, headers=self.headers, data=orjson.dumps({}))
         except ConnectionError:
             raise ConnectionError
         if req.status_code != 200:
             raise ConnectionError
-        req = req.json()
+        req = orjson.loads(req.content)
         return req
 
     # def mult_data(self):
