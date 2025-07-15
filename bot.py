@@ -1,16 +1,12 @@
 import os
 import logging
 from dotenv import load_dotenv
-import os
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 from fetchers.Finance import AsyncFinanceRealizationList
 
 load_dotenv()
-
-CLIENT_ID = os.getenv("OZON_CLIENT_ID")
-API_KEY = os.getenv("OZON_API_KEY")
 
 def calculate_pnl(operations):
     """Simple PnL calculation from list of operations."""
@@ -42,7 +38,12 @@ async def pnl(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Api-Key": os.getenv("OZON_API_KEY", ""),
     }
     fetcher = AsyncFinanceRealizationList(headers, start, end)
-    await fetcher.run_in_jupyter()
+    try:
+        await fetcher.run_in_jupyter()
+    except Exception as exc:
+        logging.exception("Ozon API request failed", exc_info=exc)
+        await update.message.reply_text("Не удалось получить данные Ozon.")
+        return
     pnl_value = calculate_pnl(fetcher.data)
     await update.message.reply_text(
         f"PnL за период {start} - {end}: {pnl_value:.2f}"
