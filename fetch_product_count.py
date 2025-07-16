@@ -1,6 +1,7 @@
 import os
-import json
 from datetime import date
+
+from tools.json_utils import dumps  # new simple json library
 
 from Ozon4.fetchers.Products import Products
 
@@ -20,5 +21,5 @@ if __name__ == "__main__":
     product_count = len(products.products)
     result = {"date": date.today().isoformat(), "product_count": product_count}
     with open("product_count.json", "w", encoding="utf-8") as f:
-        json.dump(result, f, ensure_ascii=False, indent=2)
-    print(json.dumps(result, ensure_ascii=False, indent=2))
+        f.write(dumps(result))
+    print(dumps(result))

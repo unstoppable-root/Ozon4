@@ -4,6 +4,7 @@ from typing import List, Dict
 
 from pandas import DataFrame
 from telegram import Update, InputFile
+from tools.json_utils import dumps
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 
@@ -52,10 +53,29 @@ async def pnl_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         await update.message.reply_text(f"Error: {exc}")
 
 
+async def pnljson_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Send PnL report as JSON file."""
+    try:
+        start, end = parse_dates(context.args)
+        from fetchers.Finance import AsyncFinanceRealizationList
+
+        finance = AsyncFinanceRealizationList(_build_headers(), start, end)
+        await finance.run_in_jupyter()
+        df = DataFrame(finance.data)
+        if df.empty:
+            await update.message.reply_text("No data for the specified period")
+            return
+        json_data = dumps(df.to_dict(orient="records"))
+        await update.message.reply_document(document=InputFile.from_bytes(json_data.encode(), filename="pnl.json"))
+    except Exception as exc:
+        await update.message.reply_text(f"Error: {exc}")
+
+
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send usage instructions."""
     msg = (
-        "Use /pnl <start YYYY.MM.DD> <end YYYY.MM.DD> to receive a report.\n"
+        "Use /pnl <start YYYY.MM.DD> <end YYYY.MM.DD> to receive a CSV report.\n"
+        "Use /pnljson <start YYYY.MM.DD> <end YYYY.MM.DD> for JSON format.\n"
         "If dates are omitted the last 30 days are used."
     )
     await update.message.reply_text(msg)
@@ -69,6 +89,7 @@ def main() -> None:
     app = ApplicationBuilder().token(token).build()
     app.add_handler(CommandHandler("start", start_command))
     app.add_handler(CommandHandler("pnl", pnl_command))
+    app.add_handler(CommandHandler("pnljson", pnljson_command))
 
     app.run_polling()
 
